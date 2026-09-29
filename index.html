@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS Terintegrasi Blogger</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jQuery & DataTables -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <!-- SheetJS (XLSX) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- html2pdf.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        body, html {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow-x: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+        }
+        /* Override template bawaan Blogger */
+        .header-outer, .nav-outer, .footer-outer, .sidebar-wrapper, #header, #footer, .post-header, .post-footer {
+            display: none !important;
+        }
+        
+        /* Cert Canvas A4 Landscape Ratio */
+        .cert-canvas {
+            width: 1050px;
+            height: 740px;
+            background: #ffffff;
+            position: relative;
+            box-sizing: border-box;
+            border: 12px double #0284c7;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand / Logo -->
+                <div class="flex items-center gap-3 cursor-pointer" onclick="navigateTo('home')">
+                    <div class="bg-brand-600 p-2 rounded-lg text-white">
+                        <i class="fa-solid fa-graduation-cap text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-lg tracking-wide text-white block leading-tight">LMS PINTAR</span>
+                        <span class="text-xs text-brand-400 block">Sistem Pembelajaran Mandiri</span>
+                    </div>
+                </div>
+
+                <!-- Public Nav Links -->
+                <nav id="nav-public" class="flex items-center gap-2 sm:gap-4">
+                    <button onclick="navigateTo('home')" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-slate-800 transition"><i class="fa-solid fa-house mr-1"></i> Home</button>
+                    <button onclick="navigateTo('news')" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-slate-800 transition"><i class="fa-solid fa-newspaper mr-1"></i> Berita</button>
+                    <button onclick="navigateTo('register')" class="px-3 py-2 rounded-md text-sm font-medium bg-brand-600 hover:bg-brand-700 text-white shadow transition"><i class="fa-solid fa-user-plus mr-1"></i> Pendaftaran</button>
+                    <button onclick="navigateTo('login')" class="px-3 py-2 rounded-md text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white shadow transition"><i class="fa-solid fa-right-to-bracket mr-1"></i> Login</button>
+                </nav>
+
+                <!-- User Profile Bar -->
+                <div id="nav-user" class="hidden flex items-center gap-3">
+                    <button id="btn-toggle-sidebar" class="md:hidden text-slate-300 hover:text-white p-2 text-xl" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="text-right hidden sm:block">
+                        <div id="user-display-name" class="font-semibold text-sm text-slate-100">User Name</div>
+                        <div id="user-display-role" class="text-xs text-brand-400 capitalize">Role</div>
+                    </div>
+                    <button onclick="handleLogout()" class="px-3 py-1.5 rounded-lg text-sm bg-rose-600 hover:bg-rose-700 text-white transition flex items-center gap-1">
+                        <i class="fa-solid fa-power-off text-xs"></i> Keluar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN APP CONTAINER -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- SIDEBAR NAVIGATION -->
+        <aside id="app-sidebar" class="hidden w-64 bg-slate-800 text-slate-200 flex-shrink-0 flex flex-col justify-between transition-all duration-300 z-40">
+            <div class="py-4">
+                <div class="px-4 mb-4 text-xs font-semibold text-slate-400 uppercase tracking-wider" id="sidebar-role-title">
+                    MENU UTAMA
+                </div>
+                
+                <!-- Admin Sidebar Links -->
+                <nav id="sidebar-admin-links" class="space-y-1 px-2 hidden">
+                    <button onclick="navigateTo('admin-dashboard')" class="sidebar-btn w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-700 flex items-center gap-3">
+                        <i class="fa-solid fa-chart-line text-brand-400 w-5"></i> Dashboard & Log
+                    </button>
+                    <button onclick="navigateTo('admin-materi')" class="sidebar-btn w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-700 flex items-center gap-3">
+                        <i class="fa-solid fa-book text-amber-400 w-5"></i> Kelola Materi
+                    </button>
+                    <button onclick="navigateTo('admin-users')" class="sidebar-btn w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-700 flex items-center gap-3">
+                        <i class="fa-solid fa-users-gear text-emerald-400 w-5"></i> Pengaturan User
+                    </button>
+                    <button onclick="navigateTo('admin-monitoring')" class="sidebar-btn w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-700 flex items-center gap-3">
+                        <i class="fa-solid fa-list-check text-indigo-400 w-5"></i> Monitoring Progress
+                    </button>
+                    <button onclick="navigateTo('admin-cert-settings')" class="sidebar-btn w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-700 flex items-center gap-3">
+                        <i class="fa-solid fa-certificate text-rose-400 w-5"></i> Setting Sertifikat
+                    </button>
+                    <button onclick="navigateTo('admin-bank-soal')" class="sidebar-btn w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-700 flex items-center gap-3">
+                        <i class="fa-solid fa-file-circle-question text-cyan-400 w-5"></i> Bank Soal & Excel
+                    </button>
+                </nav>
+
+                <!-- Participant Sidebar Links -->
+                <nav id="sidebar-participant-links" class="space-y-1 px-2 hidden">
+                    <button onclick="navigateTo('participant-dashboard')" class="sidebar-btn w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-700 flex items-center gap-3">
+                        <i class="fa-solid fa-chart-pie text-brand-400 w-5"></i> Dashboard Saya
+                    </button>
+                    <button onclick="navigateTo('participant-materi')" class="sidebar-btn w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-700 flex items-center gap-3">
+                        <i class="fa-solid fa-book-open-reader text-emerald-400 w-5"></i> Materi & Kuis
+                    </button>
+                    <button onclick="navigateTo('participant-sertifikat')" class="sidebar-btn w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-700 flex items-center gap-3">
+                        <i class="fa-solid fa-award text-amber-400 w-5"></i> Sertifikat Saya
+                    </button>
+                </nav>
+            </div>
+            <div class="p-4 border-t border-slate-700 text-xs text-slate-400 text-center">
+                LMS Blogger Engine v2.5
+            </div>
+        </aside>
+
+        <!-- CONTENT VIEW CONTAINER -->
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-slate-100">
+
+            <!-- 1. PUBLIC HOME PAGE -->
+            <section id="page-home" class="view-page space-y-6 max-w-5xl mx-auto">
+                <div class="bg-gradient-to-r from-brand-700 via-brand-600 to-indigo-700 text-white rounded-2xl p-8 shadow-lg">
+                    <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-3">Selamat Datang di LMS Portal</h1>
+                    <p class="text-brand-100 text-base sm:text-lg max-w-2xl">Platform e-learning mandiri terpadu. Silakan melakukan login untuk mengakses modul pembelajaran, kuis interaktif, dan sertifikasi resmi.</p>
+                    <div class="mt-6 flex flex-wrap gap-4">
+                        <button onclick="navigateTo('login')" class="px-5 py-2.5 bg-white text-brand-700 hover:bg-brand-50 font-semibold rounded-xl shadow transition">Masuk Akun</button>
+                        <button onclick="navigateTo('register')" class="px-5 py-2.5 bg-brand-800/60 hover:bg-brand-900/80 text-white border border-brand-400/40 font-semibold rounded-xl transition">Pendaftaran Baru</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4 text-xl"><i class="fa-solid fa-book-bookmark"></i></div>
+                        <h3 class="font-bold text-slate-800 mb-1">Materi Interaktif</h3>
+                        <p class="text-xs text-slate-500">Materi disajikan dalam format terstruktur lengkap dengan modul PDF/Word yang dapat dipelajari secara mandiri.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                        <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mb-4 text-xl"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                        <h3 class="font-bold text-slate-800 mb-1">Kuis Berdurasi</h3>
+                        <p class="text-xs text-slate-500">Uji pemahaman dengan kuis acak 15 menit. Penilaian otomatis langsung dari Google Apps Script.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4 text-xl"><i class="fa-solid fa-file-pdf"></i></div>
+                        <h3 class="font-bold text-slate-800 mb-1">Sertifikat Otomatis</h3>
+                        <p class="text-xs text-slate-500">Dapatkan sertifikat kelulusan digital resmi berformat PDF begitu nilai kuis memenuhi syarat kelulusan (&ge;80).</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. PUBLIC NEWS PAGE -->
+            <section id="page-news" class="view-page hidden space-y-6 max-w-5xl mx-auto">
+                <div class="border-b border-slate-200 pb-4">
+                    <h2 class="text-2xl font-bold text-slate-800">Berita & Pengumuman Pembelajaran</h2>
+                    <p class="text-sm text-slate-500">Informasi terbaru seputar kegiatan pelatihan dan jadwal materi.</p>
+                </div>
+                <div id="news-feed-container" class="space-y-4">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                        <span class="px-2.5 py-1 bg-brand-100 text-brand-700 font-semibold text-xs rounded-full">Pengumuman</span>
+                        <h3 class="font-bold text-lg text-slate-800 mt-2">Peluncuran Portal E-Learning LMS Baru</h3>
+                        <p class="text-xs text-slate-400 mt-1"><i class="fa-regular fa-clock mr-1"></i> Diposting pada 28 September 2026</p>
+                        <p class="text-sm text-slate-600 mt-3">Seluruh peserta diwajibkan menyelesaikan pendaftaran akun menggunakan NIP 18 digit resmi. Pastikan password diingat dengan baik.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. REGISTRATION PAGE -->
+            <section id="page-register" class="view-page hidden max-w-md mx-auto">
+                <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+                    <div class="text-center mb-6">
+                        <h2 class="text-2xl font-bold text-slate-800">Form Pendaftaran Peserta</h2>
+                        <p class="text-xs text-slate-500 mt-1">Lengkapi data NIP dan Unit Kerja secara valid</p>
+                    </div>
+                    <form id="form-register" onsubmit="handleRegister(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">NIP (18 Digit Angka)</label>
+                            <input type="text" id="reg-nip" maxlength="18" pattern="[0-9]{18}" required placeholder="Contoh: 199203152020121002"
+                                   class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <span class="text-[10px] text-slate-400">Harus tepat 18 digit angka tanpa spasi/simbol</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Lengkap</label>
+                            <input type="text" id="reg-nama" required placeholder="Nama Lengkap dengan Gelar"
+                                   class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <span class="text-[10px] text-slate-400">Hanya huruf, spasi, titik, dan koma</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Unit Kerja</label>
+                            <select id="reg-unit" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                <option value="">-- Pilih Unit Kerja --</option>
+                                <option value="Dinas Pendidikan">Dinas Pendidikan</option>
+                                <option value="Badan Kepegawaian">Badan Kepegawaian</option>
+                                <option value="Sekretariat Daerah">Sekretariat Daerah</option>
+                                <option value="Dinas Kesehatan">Dinas Kesehatan</option>
+                                <option value="Unit Kerja Umum">Unit Kerja Umum</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Password</label>
+                            <input type="password" id="reg-password" required placeholder="Password Akun"
+                                   class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+                        <button type="submit" id="btn-submit-reg" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg shadow transition">
+                            Daftar Akun Sekarang
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- 4. LOGIN PAGE -->
+            <section id="page-login" class="view-page hidden max-w-md mx-auto">
+                <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+                    <div class="text-center mb-6">
+                        <h2 class="text-2xl font-bold text-slate-800">Masuk ke LMS</h2>
+                        <p class="text-xs text-slate-500 mt-1">Gunakan NIP dan Password yang terdaftar</p>
+                    </div>
+                    <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">NIP Peserta / Username Admin</label>
+                            <input type="text" id="login-nip" required placeholder="Masukkan NIP (18 Digit) atau 'admin'"
+                                   class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Password</label>
+                            <input type="password" id="login-password" required placeholder="Masukkan Password"
+                                   class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+                        <button type="submit" id="btn-submit-login" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow transition">
+                            Masuk Aplikasi
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- 5. ADMIN DASHBOARD -->
+            <section id="page-admin-dashboard" class="view-page hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-slate-800">Dashboard Statistik & Aktivitas</h2>
+                    <span class="text-xs bg-slate-200 text-slate-700 px-3 py-1 rounded-full font-mono">Role: Admin LMS</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <div class="text-xs text-slate-500 font-semibold uppercase">Total Peserta</div>
+                            <div id="stat-total-users" class="text-2xl font-black text-slate-800">0</div>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-lg"><i class="fa-solid fa-users"></i></div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <div class="text-xs text-slate-500 font-semibold uppercase">Total Modul Materi</div>
+                            <div id="stat-total-materi" class="text-2xl font-black text-slate-800">0</div>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-lg"><i class="fa-solid fa-book"></i></div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <div class="text-xs text-slate-500 font-semibold uppercase">Kuis Selesai</div>
+                            <div id="stat-total-kuis" class="text-2xl font-black text-slate-800">0</div>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg"><i class="fa-solid fa-circle-check"></i></div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <div class="text-xs text-slate-500 font-semibold uppercase">Sertifikat Terbit</div>
+                            <div id="stat-total-cert" class="text-2xl font-black text-slate-800">0</div>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-lg"><i class="fa-solid fa-award"></i></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm lg:col-span-1">
+                        <h3 class="font-bold text-slate-800 mb-4 text-sm">Grafik Kelulusan Peserta</h3>
+                        <canvas id="chart-admin-stats" height="220"></canvas>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm lg:col-span-2">
+                        <h3 class="font-bold text-slate-800 mb-4 text-sm">Log Aktivitas Peserta Terbaru</h3>
+                        <div class="overflow-x-auto">
+                            <table id="tbl-activity-logs" class="w-full text-xs text-left">
+                                <thead class="bg-slate-100 text-slate-700">
+                                    <tr>
+                                        <th>Waktu</th>
+                                        <th>NIP</th>
+                                        <th>Nama</th>
+                                        <th>Aktivitas</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. ADMIN KELOLA MATERI -->
+            <section id="page-admin-materi" class="view-page hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-slate-800">Kelola Materi Pembelajaran</h2>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-slate-800 mb-4">Tambah / Edit Materi</h3>
+                        <form id="form-materi" onsubmit="handleSaveMateri(event)" class="space-y-4">
+                            <input type="hidden" id="materi-id">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Judul Materi</label>
+                                <input type="text" id="materi-judul" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tipe File</label>
+                                <select id="materi-type" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                                    <option value="PDF">PDF Modul</option>
+                                    <option value="WORD">Word / Docs Link</option>
+                                    <option value="TEXT">Teks Ringkasan</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">URL File / Embed Link</label>
+                                <input type="url" id="materi-url" required placeholder="https://..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Deskripsi Singkat</label>
+                                <textarea id="materi-deskripsi" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"></textarea>
+                            </div>
+                            <div class="flex gap-2">
+                                <button type="submit" class="flex-1 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-sm">Simpan Materi</button>
+                                <button type="button" onclick="resetMateriForm()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-sm">Reset</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm lg:col-span-2">
+                        <h3 class="font-bold text-slate-800 mb-4">Daftar Modul Materi</h3>
+                        <div class="overflow-x-auto">
+                            <table id="tbl-materi" class="w-full text-xs text-left">
+                                <thead class="bg-slate-100 text-slate-700">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Judul</th>
+                                        <th>Tipe</th>
+                                        <th>URL</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. ADMIN PENGATURAN USER -->
+            <section id="page-admin-users" class="view-page hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-slate-800">Pengaturan User & Peserta</h2>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-slate-800 mb-4">Tambah / Edit User</h3>
+                        <form id="form-user" onsubmit="handleSaveUser(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">NIP (18 Digit Unique)</label>
+                                <input type="text" id="user-nip" maxlength="18" pattern="[0-9]{18}" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Lengkap</label>
+                                <input type="text" id="user-nama" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Password (Transparan)</label>
+                                <input type="text" id="user-password" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono bg-amber-50">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Unit Kerja</label>
+                                <select id="user-unit" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                                    <option value="Dinas Pendidikan">Dinas Pendidikan</option>
+                                    <option value="Badan Kepegawaian">Badan Kepegawaian</option>
+                                    <option value="Sekretariat Daerah">Sekretariat Daerah</option>
+                                    <option value="Dinas Kesehatan">Dinas Kesehatan</option>
+                                    <option value="Unit Kerja Umum">Unit Kerja Umum</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Role</label>
+                                <select id="user-role" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                                    <option value="peserta">Peserta</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <div class="flex gap-2">
+                                <button type="submit" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-sm">Simpan User</button>
+                                <button type="button" onclick="resetUserForm()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-sm">Reset</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm lg:col-span-2">
+                        <h3 class="font-bold text-slate-800 mb-4">Daftar Akun Terdaftar</h3>
+                        <div class="overflow-x-auto">
+                            <table id="tbl-users" class="w-full text-xs text-left">
+                                <thead class="bg-slate-100 text-slate-700">
+                                    <tr>
+                                        <th>NIP</th>
+                                        <th>Nama</th>
+                                        <th>Password</th>
+                                        <th>Unit Kerja</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Aksi Toggle</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 8. ADMIN MONITORING PROGRESS -->
+            <section id="page-admin-monitoring" class="view-page hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-slate-800">Monitoring Perkembangan Pembelajaran</h2>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table id="tbl-monitoring" class="w-full text-xs text-left">
+                            <thead class="bg-slate-100 text-slate-700">
+                                <tr>
+                                    <th>NIP</th>
+                                    <th>Nama Peserta</th>
+                                    <th>Materi/Kuis</th>
+                                    <th>Nilai Kuis</th>
+                                    <th>Status Kelulusan</th>
+                                    <th>Waktu Selesai</th>
+                                    <th>No. Sertifikat</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 9. ADMIN SETTING SERTIFIKAT -->
+            <section id="page-admin-cert-settings" class="view-page hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-slate-800">Pengaturan Format & Template Sertifikat</h2>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-slate-800 mb-4">Konfigurasi Sertifikat</h3>
+                        <form id="form-cert-settings" onsubmit="handleSaveCertSettings(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Instansi Penyelenggara</label>
+                                <input type="text" id="cert-instansi" value="BADAN PENGEMBANGAN SDM KOTA" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Teks Judul Sertifikat</label>
+                                <input type="text" id="cert-judul-teks" value="SERTIFIKAT KELULUSAN" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Format Nomor Otomatis</label>
+                                <input type="text" id="cert-format-no" value="{NO}/LMS/{MM}/{YYYY}" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono">
+                                <span class="text-[10px] text-slate-400">Gunakan tag: {NO}, {MM}, {YYYY}</span>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Penandatangan / Jabatan</label>
+                                <input type="text" id="cert-penandatangan" value="Dr. H. Ahmad Sanusi, M.Si" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Upload Logo Instansi</label>
+                                <input type="file" id="cert-logo-file" accept="image/*" onchange="convertImageToBase64('cert-logo-file', 'cert-logo-preview-val')" class="w-full text-xs">
+                                <input type="hidden" id="cert-logo-preview-val">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Upload Tanda Tangan Kepala</label>
+                                <input type="file" id="cert-ttd-file" accept="image/*" onchange="convertImageToBase64('cert-ttd-file', 'cert-ttd-preview-val')" class="w-full text-xs">
+                                <input type="hidden" id="cert-ttd-preview-val">
+                            </div>
+                            <button type="submit" class="w-full py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-sm">Simpan Pengaturan Sertifikat</button>
+                        </form>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm lg:col-span-2 overflow-x-auto">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-800">Preview Sertifikat (A4 Landscape Full)</h3>
+                            <button onclick="downloadCertificatePDF()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs shadow flex items-center gap-1">
+                                <i class="fa-solid fa-file-pdf"></i> Download Preview PDF
+                            </button>
+                        </div>
+
+                        <div id="cert-render-target" class="cert-canvas mx-auto p-12 flex flex-col justify-between text-center bg-gradient-to-b from-slate-50 to-amber-50/20">
+                            <div class="flex items-center justify-between border-b-2 border-amber-600/30 pb-4">
+                                <img id="preview-logo-img" src="https://via.placeholder.com/80?text=LOGO" class="h-20 object-contain" alt="Logo">
+                                <div class="text-right">
+                                    <h2 id="preview-instansi" class="text-xl font-bold tracking-widest text-slate-800 uppercase">BADAN PENGEMBANGAN SDM</h2>
+                                    <p class="text-xs text-slate-500">Penyelenggara Pelatihan Terakreditasi Official</p>
+                                </div>
+                            </div>
+
+                            <div class="my-auto space-y-3">
+                                <p id="preview-judul-teks" class="text-2xl font-black text-amber-700 uppercase tracking-widest">SERTIFIKAT KELULUSAN</p>
+                                <p class="text-xs font-mono text-slate-500">Nomor: <span id="preview-nomor">001/LMS/09/2026</span></p>
+                                
+                                <p class="text-xs text-slate-600 italic mt-2">Diberikan Kepada:</p>
+                                <p id="preview-nama-peserta" class="text-3xl font-extrabold text-slate-900 underline decoration-amber-500 decoration-2">NAMA PESERTA CONTOH, S.Kom</p>
+                                <p id="preview-nip-peserta" class="text-xs font-mono text-slate-600">NIP: 199001012022011001</p>
+
+                                <p class="text-sm text-slate-700 max-w-2xl mx-auto mt-2">
+                                    Telah menyelesaikan dan dinyatakan <strong class="text-emerald-700">LULUS</strong> dalam Kuis Pembelajaran Modul:
+                                    <br><strong id="preview-materi-title" class="text-brand-700">Manajemen Pelayanan Publik & Digitalisasi</strong>
+                                </p>
+                            </div>
+
+                            <div class="flex justify-between items-end pt-4 border-t border-slate-200">
+                                <div class="text-left text-xs text-slate-400">
+                                    <p>Verifikasi Keaslian QR</p>
+                                    <div class="w-12 h-12 bg-slate-200 rounded flex items-center justify-center text-[8px]">QR CODE</div>
+                                </div>
+                                <div class="text-center">
+                                    <p id="preview-tanggal-terbit" class="text-xs text-slate-600">Diterbitkan: 28 September 2026</p>
+                                    <img id="preview-ttd-img" src="https://via.placeholder.com/120x50?text=TTD+Digital" class="h-14 mx-auto my-1 object-contain" alt="TTD">
+                                    <p id="preview-penandatangan" class="font-bold text-sm text-slate-900 border-b border-slate-800 inline-block px-4">Dr. H. Ahmad Sanusi, M.Si</p>
+                                    <p class="text-[10px] text-slate-500">Kepala Badan Penyelenggara</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 10. ADMIN BANK SOAL & EXCEL -->
+            <section id="page-admin-bank-soal" class="view-page hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-slate-800">Bank Soal & Import Excel</h2>
+                    <button onclick="downloadExcelTemplate()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow">
+                        <i class="fa-solid fa-file-excel mr-1"></i> Download Format Template Excel
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="space-y-6">
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="font-bold text-slate-800 mb-2">Import Soal dari Excel / CSV</h3>
+                            <p class="text-xs text-slate-500 mb-4">Pilih modul materi lalu upload file sesuai template.</p>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Materi Target</label>
+                                    <select id="import-materi-id" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"></select>
+                                </div>
+                                <div>
+                                    <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" class="w-full text-xs">
+                                </div>
+                                <button onclick="handleExcelImport()" class="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-sm">
+                                    Proses Import Soal
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="font-bold text-slate-800 mb-4">Tambah Soal Manual</h3>
+                            <form id="form-soal" onsubmit="handleSaveSoal(event)" class="space-y-3">
+                                <input type="hidden" id="soal-id">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Materi Target</label>
+                                    <select id="soal-materi-id" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Pertanyaan Soal</label>
+                                    <textarea id="soal-pertanyaan" rows="2" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Opsi A</label>
+                                    <input type="text" id="soal-opsi-a" required class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Opsi B</label>
+                                    <input type="text" id="soal-opsi-b" required class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Opsi C</label>
+                                    <input type="text" id="soal-opsi-c" required class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Opsi D</label>
+                                    <input type="text" id="soal-opsi-d" required class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Kunci Jawaban</label>
+                                    <select id="soal-kunci" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-bold bg-emerald-50">
+                                        <option value="A">Opsi A</option>
+                                        <option value="B">Opsi B</option>
+                                        <option value="C">Opsi C</option>
+                                        <option value="D">Opsi D</option>
+                                    </select>
+                                </div>
+                                <div class="flex gap-2 pt-2">
+                                    <button type="submit" class="flex-1 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-sm">Simpan Soal</button>
+                                    <button type="button" onclick="resetSoalForm()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-sm">Reset</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm lg:col-span-2">
+                        <h3 class="font-bold text-slate-800 mb-4">Daftar Bank Soal Tersimpan</h3>
+                        <div class="overflow-x-auto">
+                            <table id="tbl-soal" class="w-full text-xs text-left">
+                                <thead class="bg-slate-100 text-slate-700">
+                                    <tr>
+                                        <th>Materi</th>
+                                        <th>Pertanyaan</th>
+                                        <th>Kunci</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 11. PARTICIPANT DASHBOARD -->
+            <section id="page-participant-dashboard" class="view-page hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Selamat Datang, <span id="part-dash-nama">Peserta</span></h2>
+                        <p class="text-xs text-slate-500 mt-1">NIP: <span id="part-dash-nip" class="font-mono">18 Digit</span> | Unit: <span id="part-dash-unit">Unit Kerja</span></p>
+                    </div>
+                    <span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold text-xs">Status: Aktif</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-slate-800 mb-4">Perkembangan Pembelajaran & Kelulusan</h3>
+                        <canvas id="chart-participant-progress" height="200"></canvas>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <h3 class="font-bold text-slate-800">Ringkasan Sesi Anda</h3>
+                        <div class="p-4 bg-brand-50 rounded-xl border border-brand-200">
+                            <p class="text-xs text-brand-800 font-semibold"><i class="fa-solid fa-circle-info mr-1"></i> Peraturan Utama Kuis & Anti-Cheat:</p>
+                            <ul class="text-xs text-brand-700 list-disc list-inside mt-2 space-y-1">
+                                <li>Setiap materi wajib dibaca sampai dasar halaman untuk membuka tombol kuis.</li>
+                                <li>Muka halaman/Tab <strong>TIDAK BOLEH berpindah/membuka tab baru</strong> saat menggunakan aplikasi. Jika berpindah tab, akun akan otomatis LOGOUT secara paksa.</li>
+                                <li>Durasi Kuis adalah tepat <strong>15 Menit</strong> dengan Passing Grade kelulusan &ge; 80.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 12. PARTICIPANT MATERI & KUIS -->
+            <section id="page-participant-materi" class="view-page hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-slate-800">Materi & Kuis Interaktif</h2>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
+                    <div class="w-full sm:w-auto flex-1">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Pilih Modul Pembelajaran</label>
+                        <select id="part-select-materi" onchange="loadSelectedMaterialContent()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold text-slate-800">
+                        </select>
+                    </div>
+                    <div id="quiz-status-badge" class="px-4 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-600">
+                        Pilih Materi Terlebih Dahulu
+                    </div>
+                </div>
+
+                <div id="material-reader-card" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                        <h3 id="reader-materi-title" class="font-bold text-lg text-slate-800">Judul Materi Pembelajaran</h3>
+                        <span id="reader-materi-type" class="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs rounded-md font-mono">TYPE</span>
+                    </div>
+
+                    <div id="reader-scroll-box" onscroll="checkMaterialScrollPosition()" class="max-h-96 overflow-y-auto p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
+                        <p id="reader-materi-desc" class="text-sm text-slate-700 leading-relaxed"></p>
+                        
+                        <div id="reader-embed-container" class="w-full h-80 bg-slate-200 rounded-lg flex items-center justify-center">
+                            <iframe id="reader-iframe" class="w-full h-full rounded-lg" src=""></iframe>
+                        </div>
+
+                        <div class="p-4 bg-amber-50 border-l-4 border-amber-500 rounded text-xs text-amber-800 font-medium">
+                            <i class="fa-solid fa-scroll mr-1"></i> Perhatian: Gulir (scroll) materi ini sampai ke bagian paling bawah untuk mengaktifkan tombol Mulai Kuis!
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end pt-2">
+                        <button id="btn-start-quiz" disabled onclick="startInteractiveQuiz()" class="px-6 py-3 bg-slate-300 text-slate-500 font-bold rounded-xl shadow cursor-not-allowed transition flex items-center gap-2">
+                            <i class="fa-solid fa-lock"></i> Baca Sampai Bawah Untuk Membuka Kuis
+                        </button>
+                    </div>
+                </div>
+
+                <!-- QUIZ ACTIVE MODAL -->
+                <div id="quiz-active-container" class="hidden bg-white rounded-2xl border-2 border-brand-500 shadow-2xl p-6 space-y-6">
+                    <div class="flex justify-between items-center border-b border-slate-200 pb-4">
+                        <div>
+                            <h3 id="quiz-active-title" class="font-bold text-lg text-slate-800">Kuis Evaluasi Modul</h3>
+                            <span class="text-xs text-slate-500">Jawab seluruh pertanyaan sebelum durasi berakhir.</span>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs text-slate-500 uppercase font-bold">Sisa Waktu Kuis</div>
+                            <div id="quiz-timer" class="text-2xl font-black font-mono text-rose-600">15:00</div>
+                        </div>
+                    </div>
+
+                    <div id="quiz-questions-wrapper" class="space-y-6 max-h-[500px] overflow-y-auto pr-2">
+                    </div>
+
+                    <div class="flex justify-end pt-4 border-t border-slate-200">
+                        <button onclick="submitQuizAnswers()" class="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow text-base transition">
+                            Submit & Selesaikan Kuis
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 13. PARTICIPANT SERTIFIKAT -->
+            <section id="page-participant-sertifikat" class="view-page hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-slate-800">Sertifikat Saya</h2>
+                </div>
+
+                <div id="participant-cert-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONFIGURATION & GLOBAL STATE
+        // ==========================================
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbxm1ieat3sMeLJK_7K0ca5Mtx9bLrFmMotG5Nfig_UsJo6duIR-sX1G_HbjbCFrboqm/exec';
+
+        let currentUser = null;
+        let isQuizInProgress = false;
+        let quizTimerInterval = null;
+        let quizTimeLeft = 15 * 60;
+        let currentMaterialScrollPassed = false;
+
+        let localUsers = [
+            { nip: 'admin', nama: 'Administrator LMS', pass: 'admin123', role: 'admin', unit: 'Dinas Pendidikan', status: 'Aktif' },
+            { nip: '199001012022011001', nama: 'Budi Santoso, S.Kom', pass: '123456', role: 'peserta', unit: 'Badan Kepegawaian', status: 'Aktif' }
+        ];
+
+        let localMaterials = [
+            { id: 'MAT-01', judul: 'Manajemen Pelayanan Publik Digital', type: 'PDF', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', deskripsi: 'Panduan tata kelola administrasi modern berorientasi layanan cepat berbasis Web.' },
+            { id: 'MAT-02', judul: 'Sistem Kearsipan Elektronik & Keamanan', type: 'PDF', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', deskripsi: 'Prinsip dasar proteksi dokumen digital dan standar integritas data.' }
+        ];
+
+        let localQuestions = [
+            { id: 'Q1', materiId: 'MAT-01', soal: 'Apa tujuan utama dari digitalisasi pelayanan publik?', opsiA: 'Memperlambat alur', opsiB: 'Meningkatkan efisiensi dan transparansi', opsiC: 'Menambah biaya', opsiD: 'Menghapus arsip', kunci: 'B' },
+            { id: 'Q2', materiId: 'MAT-01', soal: 'Nilai kelulusan minimum (Passing Grade) dalam LMS ini adalah?', opsiA: '50', opsiB: '60', opsiC: '70', opsiD: '80', kunci: 'D' },
+            { id: 'Q3', materiId: 'MAT-02', soal: 'Format file standar dokumen publik yang paling umum adalah?', opsiA: 'EXE', opsiB: 'PDF', opsiC: 'BAT', opsiD: 'DLL', kunci: 'B' }
+        ];
+
+        let localProgress = [
+            { id: 'PRG-1', nip: '199001012022011001', materiId: 'MAT-01', nilai: 100, lulus: 'LULUS', waktu: '2026-09-28 10:00', noCert: '001/LMS/09/2026' }
+        ];
+
+        let localCertSettings = {
+            instansi: 'DINAS PENDIDIKAN DAN KEBUDAYAAN',
+            judul: 'SERTIFIKAT KELULUSAN',
+            formatNo: '{NO}/LMS/{MM}/{YYYY}',
+            penandatangan: 'Dr. H. Ahmad Sanusi, M.Si',
+            logo: 'https://via.placeholder.com/80?text=LOGO',
+            ttd: 'https://via.placeholder.com/120x50?text=TTD+Digital'
+        };
+
+        let localLogs = [
+            { waktu: '2026-09-28 09:15', nip: '199001012022011001', nama: 'Budi Santoso', aktivitas: 'Pendaftaran Akun Berhasil' },
+            { waktu: '2026-09-28 10:00', nip: '199001012022011001', nama: 'Budi Santoso', aktivitas: 'Menyelesaikan Kuis MAT-01 (Nilai: 100)' }
+        ];
+
+        // Anti-Cheat Window Tab Switch Detection
+        document.addEventListener('visibilitychange', function() {
+            if (currentUser && currentUser.role === 'peserta' && document.hidden) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Pelanggaran Dideteksi!',
+                    text: 'Anda berpindah tab/jendela saat menggunakan LMS. Sistem me-logout akun Anda demi menjaga integritas!',
+                    timer: 4000,
+                    showConfirmButton: false
+                }).then(() => {
+                    handleLogout();
+                });
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            navigateTo('home');
+            initDataTables();
+        });
+
+        function navigateTo(pageId) {
+            if (window.innerWidth < 768) {
+                document.getElementById('app-sidebar').classList.add('hidden');
+            }
+
+            document.querySelectorAll('.view-page').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById('page-' + pageId);
+            if (target) target.classList.remove('hidden');
+
+            if (pageId === 'admin-dashboard') renderAdminDashboard();
+            if (pageId === 'admin-materi') renderAdminMateri();
+            if (pageId === 'admin-users') renderAdminUsers();
+            if (pageId === 'admin-monitoring') renderAdminMonitoring();
+            if (pageId === 'admin-cert-settings') renderAdminCertSettings();
+            if (pageId === 'admin-bank-soal') renderAdminBankSoal();
+            if (pageId === 'participant-dashboard') renderParticipantDashboard();
+            if (pageId === 'participant-materi') renderParticipantMateri();
+            if (pageId === 'participant-sertifikat') renderParticipantCertificates();
+        }
+
+        function toggleSidebar() {
+            document.getElementById('app-sidebar').classList.toggle('hidden');
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const nip = document.getElementById('reg-nip').value.trim();
+            const nama = document.getElementById('reg-nama').value.trim();
+            const unit = document.getElementById('reg-unit').value;
+            const pass = document.getElementById('reg-password').value;
+
+            const namePattern = /^[a-zA-Z\s.,]+$/;
+            if (!namePattern.test(nama)) {
+                Swal.fire('Validasi Gagal', 'Nama hanya boleh memuat huruf, spasi, titik, dan koma!', 'error');
+                return;
+            }
+
+            if (nip.length !== 18 || isNaN(nip)) {
+                Swal.fire('Validasi Gagal', 'NIP wajib tepat 18 digit angka numeric!', 'error');
+                return;
+            }
+
+            const exists = localUsers.find(u => u.nip === nip);
+            if (exists) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'NIP Terdaftar!',
+                    html: `<span class="text-rose-600 font-bold">NIP ${nip}</span> sudah terdaftar di database!`
+                });
+                return;
+            }
+
+            localUsers.push({ nip, nama, pass, role: 'peserta', unit, status: 'Aktif' });
+            localLogs.unshift({ waktu: new Date().toLocaleString(), nip, nama, aktivitas: 'Pendaftaran Mandiri Success' });
+
+            Swal.fire('Berhasil!', 'Pendaftaran akun berhasil. Silakan login.', 'success').then(() => {
+                document.getElementById('form-register').reset();
+                navigateTo('login');
+            });
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const nip = document.getElementById('login-nip').value.trim();
+            const pass = document.getElementById('login-password').value.trim();
+
+            const user = localUsers.find(u => u.nip === nip && u.pass === pass);
+            if (!user) {
+                Swal.fire('Login Gagal', 'NIP atau Password yang Anda masukkan salah!', 'error');
+                return;
+            }
+
+            if (user.status !== 'Aktif') {
+                Swal.fire('Akses Ditolak', 'Status akun Anda TIDAK AKTIF. Hubungi Admin!', 'warning');
+                return;
+            }
+
+            currentUser = user;
+
+            document.getElementById('nav-public').classList.add('hidden');
+            document.getElementById('nav-user').classList.remove('hidden');
+            document.getElementById('app-sidebar').classList.remove('hidden');
+            document.getElementById('user-display-name').textContent = user.nama;
+            document.getElementById('user-display-role').textContent = user.role.toUpperCase();
+
+            if (user.role === 'admin') {
+                document.getElementById('sidebar-role-title').textContent = 'ADMINISTRATOR';
+                document.getElementById('sidebar-admin-links').classList.remove('hidden');
+                document.getElementById('sidebar-participant-links').classList.add('hidden');
+                navigateTo('admin-dashboard');
+            } else {
+                document.getElementById('sidebar-role-title').textContent = 'PESERTA LMS';
+                document.getElementById('sidebar-admin-links').classList.add('hidden');
+                document.getElementById('sidebar-participant-links').classList.remove('hidden');
+                navigateTo('participant-dashboard');
+            }
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Selamat Datang!',
+                text: `Halo ${user.nama}, Anda berhasil masuk.`,
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            if (quizTimerInterval) clearInterval(quizTimerInterval);
+            isQuizInProgress = false;
+
+            document.getElementById('nav-public').classList.remove('hidden');
+            document.getElementById('nav-user').classList.add('hidden');
+            document.getElementById('app-sidebar').classList.add('hidden');
+            document.getElementById('form-login').reset();
+            navigateTo('home');
+        }
+
+        let activityLogDataTable, userDataTable, monitoringDataTable, soalDataTable;
+
+        function initDataTables() {
+            activityLogDataTable = $('#tbl-activity-logs').DataTable({ pageLength: 5, lengthChange: false });
+            userDataTable = $('#tbl-users').DataTable({ pageLength: 5 });
+            monitoringDataTable = $('#tbl-monitoring').DataTable({ pageLength: 5 });
+            soalDataTable = $('#tbl-soal').DataTable({ pageLength: 5 });
+        }
+
+        function renderAdminDashboard() {
+            document.getElementById('stat-total-users').textContent = localUsers.filter(u => u.role === 'peserta').length;
+            document.getElementById('stat-total-materi').textContent = localMaterials.length;
+            document.getElementById('stat-total-kuis').textContent = localProgress.length;
+            document.getElementById('stat-total-cert').textContent = localProgress.filter(p => p.lulus === 'LULUS').length;
+
+            activityLogDataTable.clear();
+            localLogs.forEach(log => {
+                activityLogDataTable.row.add([log.waktu, log.nip, log.nama, log.aktivitas]);
+            });
+            activityLogDataTable.draw();
+
+            const ctxAdmin = document.getElementById('chart-admin-stats');
+            if (ctxAdmin) {
+                const existingChart = Chart.getChart(ctxAdmin);
+                if (existingChart) existingChart.destroy();
+
+                new Chart(ctxAdmin, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Lulus', 'Belum Lulus'],
+                        datasets: [{
+                            data: [
+                                localProgress.filter(p => p.lulus === 'LULUS').length,
+                                localProgress.filter(p => p.lulus !== 'LULUS').length
+                            ],
+                            backgroundColor: ['#10b981', '#f43f5e']
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+        }
+
+        function renderAdminMateri() {
+            const tbody = document.querySelector('#tbl-materi tbody');
+            tbody.innerHTML = '';
+            localMaterials.forEach(m => {
+                tbody.innerHTML += `
+                    <tr class="border-b">
+                        <td class="p-2 font-mono">${m.id}</td>
+                        <td class="p-2 font-semibold">${m.judul}</td>
+                        <td class="p-2"><span class="px-2 py-0.5 bg-blue-100 text-blue-800 text-[10px] rounded">${m.type}</span></td>
+                        <td class="p-2"><a href="${m.url}" target="_blank" class="text-brand-600 underline">Buka File</a></td>
+                        <td class="p-2">
+                            <button onclick="deleteMateri('${m.id}')" class="px-2 py-1 bg-rose-600 text-white rounded text-[10px]">Hapus</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function handleSaveMateri(e) {
+            e.preventDefault();
+            const judul = document.getElementById('materi-judul').value;
+            const type = document.getElementById('materi-type').value;
+            const url = document.getElementById('materi-url').value;
+            const deskripsi = document.getElementById('materi-deskripsi').value;
+
+            localMaterials.push({
+                id: 'MAT-0' + (localMaterials.length + 1),
+                judul, type, url, deskripsi
+            });
+
+            Swal.fire('Tersimpan!', 'Materi baru berhasil ditambahkan.', 'success');
+            resetMateriForm();
+            renderAdminMateri();
+        }
+
+        function resetMateriForm() {
+            document.getElementById('form-materi').reset();
+            document.getElementById('materi-id').value = '';
+        }
+
+        function deleteMateri(id) {
+            localMaterials = localMaterials.filter(m => m.id !== id);
+            renderAdminMateri();
+        }
+
+        function renderAdminUsers() {
+            userDataTable.clear();
+            localUsers.forEach(u => {
+                const toggleBtn = u.status === 'Aktif' 
+                    ? `<button onclick="toggleUserStatus('${u.nip}')" class="px-2 py-1 bg-emerald-600 text-white rounded text-[10px]">Aktif (Klik Nonaktifkan)</button>`
+                    : `<button onclick="toggleUserStatus('${u.nip}')" class="px-2 py-1 bg-slate-400 text-white rounded text-[10px]">Tidak Aktif (Klik Aktifkan)</button>`;
+
+                userDataTable.row.add([
+                    u.nip, u.nama, `<span class="font-mono bg-amber-100 px-1 rounded">${u.pass}</span>`, u.unit, u.role, u.status, toggleBtn
+                ]);
+            });
+            userDataTable.draw();
+        }
+
+        function handleSaveUser(e) {
+            e.preventDefault();
+            const nip = document.getElementById('user-nip').value.trim();
+            const nama = document.getElementById('user-nama').value.trim();
+            const pass = document.getElementById('user-password').value.trim();
+            const unit = document.getElementById('user-unit').value;
+            const role = document.getElementById('user-role').value;
+
+            const exists = localUsers.find(u => u.nip === nip);
+            if (exists) {
+                exists.nama = nama; exists.pass = pass; exists.unit = unit; exists.role = role;
+            } else {
+                localUsers.push({ nip, nama, pass, unit, role, status: 'Aktif' });
+            }
+
+            Swal.fire('Tersimpan', 'Data user berhasil disimpan.', 'success');
+            resetUserForm();
+            renderAdminUsers();
+        }
+
+        function resetUserForm() {
+            document.getElementById('form-user').reset();
+        }
+
+        function toggleUserStatus(nip) {
+            const u = localUsers.find(user => user.nip === nip);
+            if (u) {
+                u.status = u.status === 'Aktif' ? 'Tidak Aktif' : 'Aktif';
+                renderAdminUsers();
+            }
+        }
+
+        function renderAdminMonitoring() {
+            monitoringDataTable.clear();
+            localProgress.forEach(p => {
+                const u = localUsers.find(user => user.nip === p.nip);
+                const m = localMaterials.find(mat => mat.id === p.materiId);
+                monitoringDataTable.row.add([
+                    p.nip,
+                    u ? u.nama : 'Peserta',
+                    m ? m.judul : p.materiId,
+                    p.nilai,
+                    p.lulus === 'LULUS' ? '<span class="text-emerald-600 font-bold">LULUS</span>' : '<span class="text-rose-600 font-bold">GAGAL</span>',
+                    p.waktu,
+                    p.noCert || '-'
+                ]);
+            });
+            monitoringDataTable.draw();
+        }
+
+        function renderAdminCertSettings() {
+            document.getElementById('preview-instansi').textContent = localCertSettings.instansi;
+            document.getElementById('preview-judul-teks').textContent = localCertSettings.judul;
+            document.getElementById('preview-penandatangan').textContent = localCertSettings.penandatangan;
+            if (localCertSettings.logo) document.getElementById('preview-logo-img').src = localCertSettings.logo;
+            if (localCertSettings.ttd) document.getElementById('preview-ttd-img').src = localCertSettings.ttd;
+        }
+
+        function handleSaveCertSettings(e) {
+            e.preventDefault();
+            localCertSettings.instansi = document.getElementById('cert-instansi').value;
+            localCertSettings.judul = document.getElementById('cert-judul-teks').value;
+            localCertSettings.formatNo = document.getElementById('cert-format-no').value;
+            localCertSettings.penandatangan = document.getElementById('cert-penandatangan').value;
+
+            const logoVal = document.getElementById('cert-logo-preview-val').value;
+            const ttdVal = document.getElementById('cert-ttd-preview-val').value;
+            if (logoVal) localCertSettings.logo = logoVal;
+            if (ttdVal) localCertSettings.ttd = ttdVal;
+
+            renderAdminCertSettings();
+            Swal.fire('Tersimpan', 'Setting sertifikat berhasil diperbarui.', 'success');
+        }
+
+        function convertImageToBase64(fileInputId, hiddenValId) {
+            const file = document.getElementById(fileInputId).files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onloadend = function() {
+                    document.getElementById(hiddenValId).value = reader.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function renderAdminBankSoal() {
+            const importSelect = document.getElementById('import-materi-id');
+            const soalSelect = document.getElementById('soal-materi-id');
+            importSelect.innerHTML = '';
+            soalSelect.innerHTML = '';
+
+            localMaterials.forEach(m => {
+                importSelect.innerHTML += `<option value="${m.id}">${m.judul}</option>`;
+                soalSelect.innerHTML += `<option value="${m.id}">${m.judul}</option>`;
+            });
+
+            soalDataTable.clear();
+            localQuestions.forEach(q => {
+                const m = localMaterials.find(mat => mat.id === q.materiId);
+                soalDataTable.row.add([
+                    m ? m.judul : q.materiId,
+                    q.soal,
+                    `<span class="font-bold text-emerald-700">${q.kunci}</span>`,
+                    `<button onclick="deleteSoal('${q.id}')" class="px-2 py-1 bg-rose-600 text-white rounded text-[10px]">Hapus</button>`
+                ]);
+            });
+            soalDataTable.draw();
+        }
+
+        function handleSaveSoal(e) {
+            e.preventDefault();
+            const materiId = document.getElementById('soal-materi-id').value;
+            const soal = document.getElementById('soal-pertanyaan').value;
+            const opsiA = document.getElementById('soal-opsi-a').value;
+            const opsiB = document.getElementById('soal-opsi-b').value;
+            const opsiC = document.getElementById('soal-opsi-c').value;
+            const opsiD = document.getElementById('soal-opsi-d').value;
+            const kunci = document.getElementById('soal-kunci').value;
+
+            localQuestions.push({ id: 'Q' + (localQuestions.length + 1), materiId, soal, opsiA, opsiB, opsiC, opsiD, kunci });
+
+            Swal.fire('Berhasil', 'Soal kuis baru berhasil disimpan.', 'success');
+            resetSoalForm();
+            renderAdminBankSoal();
+        }
+
+        function resetSoalForm() {
+            document.getElementById('form-soal').reset();
+        }
+
+        function deleteSoal(id) {
+            localQuestions = localQuestions.filter(q => q.id !== id);
+            renderAdminBankSoal();
+        }
+
+        function handleExcelImport() {
+            const fileInput = document.getElementById('excel-file-input');
+            const targetMateriId = document.getElementById('import-materi-id').value;
+
+            if (!fileInput.files.length) {
+                Swal.fire('Pilih File', 'Silakan pilih file Excel (.xlsx) terlebih dahulu!', 'warning');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                let count = 0;
+                jsonData.forEach((row, index) => {
+                    if (row.Pertanyaan && row.OpsiA && row.OpsiB && row.Kunci) {
+                        localQuestions.push({
+                            id: 'Q-IMP-' + (index + 1),
+                            materiId: targetMateriId,
+                            soal: row.Pertanyaan,
+                            opsiA: row.OpsiA,
+                            opsiB: row.OpsiB,
+                            opsiC: row.OpsiC || '',
+                            opsiD: row.OpsiD || '',
+                            kunci: (row.Kunci || 'A').toUpperCase().trim()
+                        });
+                        count++;
+                    }
+                });
+
+                Swal.fire('Import Berhasil!', `Berhasil mengimpor ${count} soal ke dalam modul.`, 'success');
+                fileInput.value = '';
+                renderAdminBankSoal();
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function downloadExcelTemplate() {
+            const templateData = [
+                { Pertanyaan: "Apa kepanjangan dari LMS?", OpsiA: "Learning Management System", OpsiB: "Local Main System", OpsiC: "Log Master Server", OpsiD: "Link Media Site", Kunci: "A" },
+                { Pertanyaan: "Berapa passing grade LMS ini?", OpsiA: "50", OpsiB: "60", OpsiC: "70", OpsiD: "80", Kunci: "D" }
+            ];
+            const ws = XLSX.utils.json_to_sheet(templateData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Template_Bank_Soal");
+            XLSX.writeFile(wb, "Template_Bank_Soal_LMS.xlsx");
+        }
+
+        function renderParticipantDashboard() {
+            if (!currentUser) return;
+            document.getElementById('part-dash-nama').textContent = currentUser.nama;
+            document.getElementById('part-dash-nip').textContent = currentUser.nip;
+            document.getElementById('part-dash-unit').textContent = currentUser.unit;
+
+            const userProg = localProgress.filter(p => p.nip === currentUser.nip);
+            const ctxPart = document.getElementById('chart-participant-progress');
+            if (ctxPart) {
+                const existingChart = Chart.getChart(ctxPart);
+                if (existingChart) existingChart.destroy();
+
+                new Chart(ctxPart, {
+                    type: 'bar',
+                    data: {
+                        labels: userProg.map(p => p.materiId),
+                        datasets: [{
+                            label: 'Nilai Kuis Saya',
+                            data: userProg.map(p => p.nilai),
+                            backgroundColor: '#0284c7'
+                        }]
+                    },
+                    options: { scales: { y: { beginAtZero: true, max: 100 } } }
+                });
+            }
+        }
+
+        function renderParticipantMateri() {
+            const select = document.getElementById('part-select-materi');
+            select.innerHTML = '';
+            localMaterials.forEach(m => {
+                select.innerHTML += `<option value="${m.id}">${m.judul}</option>`;
+            });
+            loadSelectedMaterialContent();
+        }
+
+        function loadSelectedMaterialContent() {
+            const selectedId = document.getElementById('part-select-materi').value;
+            const mat = localMaterials.find(m => m.id === selectedId);
+            if (!mat) return;
+
+            document.getElementById('reader-materi-title').textContent = mat.judul;
+            document.getElementById('reader-materi-type').textContent = mat.type;
+            document.getElementById('reader-materi-desc').textContent = mat.deskripsi;
+            document.getElementById('reader-iframe').src = mat.url;
+
+            const passed = localProgress.find(p => p.nip === currentUser.nip && p.materiId === mat.id && p.lulus === 'LULUS');
+            const badge = document.getElementById('quiz-status-badge');
+            const btnQuiz = document.getElementById('btn-start-quiz');
+
+            if (passed) {
+                badge.className = 'px-4 py-2 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800';
+                badge.textContent = 'LULUS (Kuis Selesai)';
+                btnQuiz.disabled = true;
+                btnQuiz.className = 'px-6 py-3 bg-slate-300 text-slate-500 font-bold rounded-xl cursor-not-allowed';
+                btnQuiz.innerHTML = '<i class="fa-solid fa-circle-check"></i> Kuis Sudah Lulus (Locked)';
+            } else {
+                badge.className = 'px-4 py-2 rounded-lg text-xs font-bold bg-amber-100 text-amber-800';
+                badge.textContent = 'Belum Lulus / Belum Dikerjakan';
+                btnQuiz.disabled = true;
+                btnQuiz.className = 'px-6 py-3 bg-slate-300 text-slate-500 font-bold rounded-xl cursor-not-allowed';
+                btnQuiz.innerHTML = '<i class="fa-solid fa-lock"></i> Baca Sampai Bawah Untuk Membuka Kuis';
+            }
+        }
+
+        function checkMaterialScrollPosition() {
+            const scrollBox = document.getElementById('reader-scroll-box');
+            const selectedId = document.getElementById('part-select-materi').value;
+            const passed = localProgress.find(p => p.nip === currentUser.nip && p.materiId === selectedId && p.lulus === 'LULUS');
+
+            if (passed) return;
+
+            if (scrollBox.scrollTop + scrollBox.clientHeight >= scrollBox.scrollHeight - 10) {
+                currentMaterialScrollPassed = true;
+                const btnQuiz = document.getElementById('btn-start-quiz');
+                btnQuiz.disabled = false;
+                btnQuiz.className = 'px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow cursor-pointer transition flex items-center gap-2';
+                btnQuiz.innerHTML = '<i class="fa-solid fa-play"></i> Mulai Kuis Sekarang (15 Menit)';
+            }
+        }
+
+        function startInteractiveQuiz() {
+            const selectedId = document.getElementById('part-select-materi').value;
+            const questions = localQuestions.filter(q => q.materiId === selectedId);
+
+            if (questions.length === 0) {
+                Swal.fire('Soal Belum Ada', 'Belum ada bank soal kuis yang dimasukkan admin untuk modul ini.', 'warning');
+                return;
+            }
+
+            const randomizedQuestions = [...questions].sort(() => Math.random() - 0.5);
+
+            const wrapper = document.getElementById('quiz-questions-wrapper');
+            wrapper.innerHTML = '';
+
+            randomizedQuestions.forEach((q, idx) => {
+                wrapper.innerHTML += `
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                        <p class="font-bold text-sm text-slate-800">${idx + 1}. ${q.soal}</p>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-3 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-brand-50">
+                                <input type="radio" name="q_${q.id}" value="A" class="w-4 h-4 text-brand-600">
+                                <span class="text-xs text-slate-700">A. ${q.opsiA}</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-brand-50">
+                                <input type="radio" name="q_${q.id}" value="B" class="w-4 h-4 text-brand-600">
+                                <span class="text-xs text-slate-700">B. ${q.opsiB}</span>
+                            </label>
+                            ${q.opsiC ? `
+                            <label class="flex items-center gap-3 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-brand-50">
+                                <input type="radio" name="q_${q.id}" value="C" class="w-4 h-4 text-brand-600">
+                                <span class="text-xs text-slate-700">C. ${q.opsiC}</span>
+                            </label>` : ''}
+                            ${q.opsiD ? `
+                            <label class="flex items-center gap-3 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-brand-50">
+                                <input type="radio" name="q_${q.id}" value="D" class="w-4 h-4 text-brand-600">
+                                <span class="text-xs text-slate-700">D. ${q.opsiD}</span>
+                            </label>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('material-reader-card').classList.add('hidden');
+            document.getElementById('quiz-active-container').classList.remove('hidden');
+
+            isQuizInProgress = true;
+            quizTimeLeft = 15 * 60;
+            updateTimerDisplay();
+
+            quizTimerInterval = setInterval(() => {
+                quizTimeLeft--;
+                updateTimerDisplay();
+                if (quizTimeLeft <= 0) {
+                    clearInterval(quizTimerInterval);
+                    Swal.fire('Waktu Habis!', 'Waktu 15 menit telah habis. Jawaban Anda otomatis di-submit!', 'info').then(() => {
+                        submitQuizAnswers();
+                    });
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(quizTimeLeft / 60);
+            const secs = quizTimeLeft % 60;
+            document.getElementById('quiz-timer').textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function submitQuizAnswers() {
+            if (quizTimerInterval) clearInterval(quizTimerInterval);
+            isQuizInProgress = false;
+
+            const selectedId = document.getElementById('part-select-materi').value;
+            const questions = localQuestions.filter(q => q.materiId === selectedId);
+
+            let correctCount = 0;
+            questions.forEach(q => {
+                const selectedRadio = document.querySelector(`input[name="q_${q.id}"]:checked`);
+                if (selectedRadio && selectedRadio.value === q.kunci) {
+                    correctCount++;
+                }
+            });
+
+            const score = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
+            const isPassed = score >= 80;
+
+            const now = new Date();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const yyyy = now.getFullYear();
+            const certNo = `${String(localProgress.length + 1).padStart(3, '0')}/LMS/${mm}/${yyyy}`;
+
+            localProgress.push({
+                id: 'PRG-' + (localProgress.length + 1),
+                nip: currentUser.nip,
+                materiId: selectedId,
+                nilai: score,
+                lulus: isPassed ? 'LULUS' : 'GAGAL',
+                waktu: now.toLocaleString(),
+                noCert: isPassed ? certNo : '-'
+            });
+
+            localLogs.unshift({
+                waktu: now.toLocaleString(),
+                nip: currentUser.nip,
+                nama: currentUser.nama,
+                aktivitas: `Selesai Kuis ${selectedId} - Nilai: ${score} (${isPassed ? 'LULUS' : 'GAGAL'})`
+            });
+
+            document.getElementById('quiz-active-container').classList.add('hidden');
+            document.getElementById('material-reader-card').classList.remove('hidden');
+
+            if (isPassed) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Selamat! Anda Lulus',
+                    html: `<p>Nilai Anda: <strong class="text-2xl text-emerald-600">${score}</strong></p><p class="text-xs text-slate-500 mt-2">Sertifikat digital Anda telah terbit dan dapat diunduh di menu Sertifikat Saya.</p>`
+                }).then(() => {
+                    loadSelectedMaterialContent();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Belum Lulus',
+                    html: `<p>Nilai Anda: <strong class="text-2xl text-rose-600">${score}</strong></p><p class="text-xs text-slate-500 mt-2">Passing grade kelulusan adalah 80. Silakan pelajari kembali materi dan coba kuis lagi.</p>`
+                }).then(() => {
+                    loadSelectedMaterialContent();
+                });
+            }
+        }
+
+        function renderParticipantCertificates() {
+            const container = document.getElementById('participant-cert-list');
+            container.innerHTML = '';
+
+            const passedList = localProgress.filter(p => p.nip === currentUser.nip && p.lulus === 'LULUS');
+
+            if (passedList.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-2 bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500">
+                        <i class="fa-solid fa-award text-4xl text-slate-300 mb-2"></i>
+                        <p class="font-bold">Belum Ada Sertifikat</p>
+                        <p class="text-xs">Selesaikan kuis dengan nilai minimum 80 untuk menerbitkan sertifikat.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            passedList.forEach(p => {
+                const mat = localMaterials.find(m => m.id === p.materiId);
+                container.innerHTML += `
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                        <div class="flex justify-between items-start">
+                            <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded">SERTIFIKAT RESMI</span>
+                            <span class="text-xs font-mono text-slate-400">${p.waktu}</span>
+                        </div>
+                        <h3 class="font-bold text-slate-800 text-base">${mat ? mat.judul : p.materiId}</h3>
+                        <p class="text-xs text-slate-500 font-mono">No. Sertifikat: ${p.noCert}</p>
+                        <button onclick="triggerCertificateDownload('${p.noCert}', '${mat ? mat.judul : p.materiId}')" class="w-full py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow">
+                            <i class="fa-solid fa-file-pdf"></i> Download Sertifikat PDF (A4)
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        function triggerCertificateDownload(noCert, materiJudul) {
+            document.getElementById('preview-nama-peserta').textContent = currentUser.nama;
+            document.getElementById('preview-nip-peserta').textContent = 'NIP: ' + currentUser.nip;
+            document.getElementById('preview-nomor').textContent = noCert;
+            document.getElementById('preview-materi-title').textContent = materiJudul;
+
+            downloadCertificatePDF();
+        }
+
+        function downloadCertificatePDF() {
+            const element = document.getElementById('cert-render-target');
+            const opt = {
+                margin:       0,
+                filename:     `Sertifikat_Kelulusan_LMS.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>
